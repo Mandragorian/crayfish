@@ -5,6 +5,7 @@ use std::io::Write;
 
 use raytracing::vec3::Vec3;
 use raytracing::ray::Ray;
+use raytracing::camera::Camera;
 use raytracing::hitable::{World, Hitable};
 use raytracing::hitable::surfaces::sphere::Sphere;
 
@@ -24,15 +25,13 @@ fn main() {
     let nx = 200;
     let ny = 100;
 
-    let lower_left = Vec3::new(-2., -1., -1.);
-    let horizontal = Vec3::new(4., 0., 0.);
-    let vertical = Vec3::new(0., 2., 0.);
-    let origin = Vec3::new(0., 0., 0.);
 
     let sphere1 = Sphere::new(Vec3::new(0., 0., -1.), 0.5);
     let sphere2 = Sphere::new(Vec3::new(0., -100.5, -1.), 100.);
 
     let world = World::new(vec![Box::new(sphere1), Box::new(sphere2)]);
+
+    let camera = Camera::new();
 
     let mut file = File::create("test.ppm").unwrap();
 
@@ -42,9 +41,8 @@ fn main() {
             let u = i as f64 / (nx as f64);
             let v = j as f64 / (ny as f64);
 
-            let r = Ray::new(origin, lower_left
-                                             + horizontal * u
-                                             + vertical * v);
+            let r = camera.get_ray(u, v);
+
 
             let col = colour(r, &world);
 
