@@ -1,7 +1,11 @@
 extern crate raytracing;
 
+extern crate rand;
+
 use std::fs::File;
 use std::io::Write;
+
+use rand::{OsRng, Rng};
 
 use raytracing::vec3::Vec3;
 use raytracing::ray::Ray;
@@ -24,7 +28,9 @@ fn colour(r: Ray, world: &World) -> Vec3 {
 fn main() {
     let nx = 200;
     let ny = 100;
+    let ns = 100;
 
+    let mut gen = OsRng::new().unwrap();
 
     let sphere1 = Sphere::new(Vec3::new(0., 0., -1.), 0.5);
     let sphere2 = Sphere::new(Vec3::new(0., -100.5, -1.), 100.);
@@ -38,13 +44,19 @@ fn main() {
     file.write_fmt(format_args!("P3\n{} {}\n255\n", nx, ny)).unwrap();
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let u = i as f64 / (nx as f64);
-            let v = j as f64 / (ny as f64);
+            let mut col = Vec3::new(0., 0., 0.);
+            for _ in 0..ns {
+                let rand_u: f64 = gen.gen();
+                let rand_v: f64 = gen.gen();
+                let u = ((i as f64) + rand_u) / (nx as f64);
+                let v = ((j as f64) + rand_v) / (ny as f64);
 
-            let r = camera.get_ray(u, v);
+                let r = camera.get_ray(u, v);
 
+                col += colour(r, &world);
+            }
 
-            let col = colour(r, &world);
+            col /= ns as f64;
 
             let ir = (255.99*col.e[0]) as u8;
             let ig = (255.99*col.e[1]) as u8;
