@@ -2,11 +2,7 @@ use vec3::Vec3;
 use ray::Ray;
 use hitable::HitRecord;
 use material::Material;
-use common::random_in_unit_sphere;
-
-fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-    *v - *n * Vec3::dot(v, n) * 2.
-}
+use common::{random_in_unit_sphere, reflect};
 
 #[derive(Copy, Clone)]
 pub struct Metal {
