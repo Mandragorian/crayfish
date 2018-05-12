@@ -14,6 +14,7 @@ use raytracing::hitable::{World, Hitable};
 use raytracing::hitable::surfaces::sphere::Sphere;
 use raytracing::material::common::lambertian::Lambertian;
 use raytracing::material::common::metal::Metal;
+use raytracing::material::common::dielectric::Dielectric;
 
 fn colour<'a, T>(r: Ray, world: &T, depth: usize) -> Vec3
 where
@@ -35,14 +36,14 @@ where
 fn main() {
     const NX: u32 = 1600;
     const NY: u32 = 800;
-    const NS: u32 = 300;
+    const NS: u32 = 200;
 
     let mut gen = OsRng::new().unwrap();
 
-    let sphere1 = Sphere::new(Vec3::new(0., 0., -1.), 0.5, Lambertian::new(Vec3::new(0.8, 0.3, 0.3)));
+    let sphere1 = Sphere::new(Vec3::new(0., 0., -1.5), 0.5, Lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
     let sphere4 = Sphere::new(Vec3::new(0., -100.5, -1.), 100., Lambertian::new(Vec3::new(0.8, 0.8, 0.)));
-    let sphere3 = Sphere::new(Vec3::new(1., 0., -1.), 0.5, Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.));
-    let sphere2 = Sphere::new(Vec3::new(-1., 0., -1.), 0.5, Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3));
+    let sphere3 = Sphere::new(Vec3::new(0.8, 0., -1.), 0.5, Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.));
+    let sphere2 = Sphere::new(Vec3::new(-0.6, 0., -1.), 0.5, Dielectric::new(1.5));
 
     let world = World::new(vec![
                            Box::new(sphere1),
