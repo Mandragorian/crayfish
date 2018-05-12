@@ -12,14 +12,21 @@ use raytracing::ray::Ray;
 use raytracing::camera::Camera;
 use raytracing::hitable::{World, Hitable};
 use raytracing::hitable::surfaces::sphere::Sphere;
+use raytracing::material::common::lambertian::Lambertian;
+use raytracing::material::common::metal::Metal;
 
-fn colour(r: Ray, world: &World) -> Vec3 {
-    if let Some(hrec) = world.hit(&r, 0., std::f64::MAX)  {
-        let normal = hrec.normal;
-        return Vec3::new(normal.e[0] + 1., normal.e[1] + 1., normal.e[2] + 1.)
-               * 0.5;
+fn colour<'a, T>(r: Ray, world: &T, depth: usize) -> Vec3
+where
+    T: Hitable<'a>
+{
+    if let Some(hrec) = world.hit(&r, 0.0001, std::f64::MAX)  {
+        if depth < 50 {
+            if let Some((att, scat)) = hrec.material.scatter(&r, &hrec) {
+                return att * colour(scat, world, depth + 1);
+            }
+        }
+        return Vec3::new(0., 0., 0.);
     }
-
     let unit_direction = r.direction.unit_vector();
     let t = (unit_direction.e[1] + 1.) * 0.5;
     Vec3::new(1., 1., 1.) * (1. - t) + Vec3::new(0.5, 0.7, 1.) * t
@@ -28,14 +35,20 @@ fn colour(r: Ray, world: &World) -> Vec3 {
 fn main() {
     const NX: u32 = 1600;
     const NY: u32 = 800;
-    const NS: u32 = 100;
+    const NS: u32 = 300;
 
     let mut gen = OsRng::new().unwrap();
 
-    let sphere1 = Sphere::new(Vec3::new(0., 0., -1.), 0.5);
-    let sphere2 = Sphere::new(Vec3::new(0., -100.5, -1.), 100.);
+    let sphere1 = Sphere::new(Vec3::new(0., 0., -1.), 0.5, Lambertian::new(Vec3::new(0.8, 0.3, 0.3)));
+    let sphere4 = Sphere::new(Vec3::new(0., -100.5, -1.), 100., Lambertian::new(Vec3::new(0.8, 0.8, 0.)));
+    let sphere3 = Sphere::new(Vec3::new(1., 0., -1.), 0.5, Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.));
+    let sphere2 = Sphere::new(Vec3::new(-1., 0., -1.), 0.5, Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3));
 
-    let world = World::new(vec![Box::new(sphere1), Box::new(sphere2)]);
+    let world = World::new(vec![
+                           Box::new(sphere1),
+                           Box::new(sphere2),
+                           Box::new(sphere3),
+                           Box::new(sphere4)]);
 
     let camera = Camera::new();
 
@@ -43,6 +56,7 @@ fn main() {
 
     file.write_fmt(format_args!("P3\n{} {}\n255\n", NX, NY)).unwrap();
     for j in (0..NY).rev() {
+        println!("{}", j);
         for i in 0..NX {
             let mut col = Vec3::new(0., 0., 0.);
             for _ in 0..NS {
@@ -53,7 +67,7 @@ fn main() {
 
                 let r = camera.get_ray(u, v);
 
-                col += colour(r, &world);
+                col += colour(r, &world, 0);
             }
 
             col /= NS as f64;

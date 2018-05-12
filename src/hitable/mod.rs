@@ -1,49 +1,55 @@
 use ray::Ray;
 use vec3::Vec3;
+use material::Material;
 
 pub mod surfaces;
 
-#[derive(Copy, Clone)]
-pub struct HitRecord {
+pub struct HitRecord<'a>
+{
     pub t: f64,
     pub p: Vec3,
-    pub normal: Vec3
+    pub normal: Vec3,
+    pub material: Box<Material + 'a>,
 }
 
-impl HitRecord {
-    pub fn new(t: f64, p: Vec3, normal: Vec3) -> HitRecord {
+impl<'a> HitRecord<'a>
+{
+    pub fn new(t: f64, p: Vec3, normal: Vec3, material: Box<Material + 'a>) -> HitRecord {
         HitRecord {
             t,
             p,
             normal,
+            material,
         }
     }
 }
 
-pub trait Hitable {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+pub trait Hitable<'a>
+{
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>>;
 }
 
-type BoxedHitable = Box<Hitable>;
+type BoxedHitable<'a> = Box<Hitable<'a>>;
 
-pub struct World {
-    pub list: Vec<BoxedHitable>
+pub struct World<'a> {
+    pub list: Vec<BoxedHitable<'a>>
 }
 
-impl World {
-    pub fn new(list: Vec<BoxedHitable>) -> World {
+impl<'a> World<'a> {
+    pub fn new(list: Vec<BoxedHitable<'a>>) -> World {
         World {
             list,
         }
     }
 }
 
-impl Hitable for World {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let get_closer_hit = |(acc, closest_so_far), item: &BoxedHitable| {
+impl<'a> Hitable<'a> for World<'a> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
+        let get_closer_hit = |(acc, closest_so_far), item: &BoxedHitable<'a>| {
             let res = item.hit(ray, t_min, closest_so_far);
             if let Some(hrec) = res {
-                return (Some(hrec), hrec.t);
+                let new_t = hrec.t.clone();
+                return (Some(hrec), new_t);
             }
             (acc, closest_so_far)
         };
