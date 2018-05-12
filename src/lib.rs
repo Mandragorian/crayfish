@@ -6,4 +6,6 @@ pub mod hitable;
 
 pub mod camera;
 
+pub mod material;
+
 pub mod common;
