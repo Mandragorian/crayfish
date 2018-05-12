@@ -5,3 +5,5 @@ pub mod ray;
 pub mod hitable;
 
 pub mod camera;
+
+pub mod common;
