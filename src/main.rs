@@ -26,9 +26,9 @@ fn colour(r: Ray, world: &World) -> Vec3 {
 }
 
 fn main() {
-    let nx = 200;
-    let ny = 100;
-    let ns = 100;
+    const NX: u32 = 1600;
+    const NY: u32 = 800;
+    const NS: u32 = 100;
 
     let mut gen = OsRng::new().unwrap();
 
@@ -41,23 +41,24 @@ fn main() {
 
     let mut file = File::create("test.ppm").unwrap();
 
-    file.write_fmt(format_args!("P3\n{} {}\n255\n", nx, ny)).unwrap();
-    for j in (0..ny).rev() {
-        for i in 0..nx {
+    file.write_fmt(format_args!("P3\n{} {}\n255\n", NX, NY)).unwrap();
+    for j in (0..NY).rev() {
+        for i in 0..NX {
             let mut col = Vec3::new(0., 0., 0.);
-            for _ in 0..ns {
+            for _ in 0..NS {
                 let rand_u: f64 = gen.gen();
                 let rand_v: f64 = gen.gen();
-                let u = ((i as f64) + rand_u) / (nx as f64);
-                let v = ((j as f64) + rand_v) / (ny as f64);
+                let u = ((i as f64) + rand_u) / (NX as f64);
+                let v = ((j as f64) + rand_v) / (NY as f64);
 
                 let r = camera.get_ray(u, v);
 
                 col += colour(r, &world);
             }
 
-            col /= ns as f64;
+            col /= NS as f64;
 
+            let col = Vec3::new(col.e[0].sqrt(), col.e[1].sqrt(), col.e[2].sqrt());
             let ir = (255.99*col.e[0]) as u8;
             let ig = (255.99*col.e[1]) as u8;
             let ib = (255.99*col.e[2]) as u8;
