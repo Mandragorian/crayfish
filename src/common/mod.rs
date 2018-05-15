@@ -4,6 +4,11 @@ use self::rand::{OsRng,Rng};
 
 use vec3::Vec3;
 
+pub fn rand() -> f64 {
+    let mut gen = OsRng::new().unwrap();
+    gen.gen()
+}
+
 pub fn random_in_unit_sphere() -> Vec3 {
     let mut gen = OsRng::new().unwrap();
     loop {
@@ -35,7 +40,11 @@ pub fn schlick(cosine: f64, ref_idx: f64) -> f64 {
     r0 + (1. - r0) * (1. - cosine).powi(5)
 }
 
-pub fn rand() -> f64 {
-    let mut gen = OsRng::new().unwrap();
-    gen.gen()
+pub fn random_in_unit_disc() -> Vec3 {
+    loop {
+        let p = Vec3::new(rand(), rand(), 0.) * 2. - Vec3::new(1., 1., 0.);
+        if p.squared_length() <= 1. {
+            return p
+        }
+    }
 }
