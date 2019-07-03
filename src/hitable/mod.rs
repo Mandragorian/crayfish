@@ -29,7 +29,7 @@ pub trait Hitable<'a>
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>>;
 }
 
-type BoxedHitable<'a> = Box<Hitable<'a>>;
+type BoxedHitable<'a> = Box<Hitable<'a> + Sync>;
 
 pub struct World<'a> {
     pub list: Vec<BoxedHitable<'a>>

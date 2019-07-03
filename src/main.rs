@@ -1,12 +1,13 @@
 extern crate raytracing;
-
-extern crate rand;
+extern crate rayon;
 
 use std::fs::File;
 use std::io::Write;
 use std::f64::consts::PI;
 
 use rand::{OsRng, Rng};
+
+use rayon::prelude::*;
 
 use raytracing::vec3::Vec3;
 use raytracing::ray::Ray;
@@ -35,10 +36,10 @@ where
     Vec3::new(1., 1., 1.) * (1. - t) + Vec3::new(0.5, 0.7, 1.) * t
 }
 
-fn random_scene<'a>() -> impl Hitable<'a> {
+fn random_scene<'a>() -> World<'a> {
     const N: usize = 500;
 
-    let mut objects: Vec<Box<Hitable<'a>>> = Vec::with_capacity(N);
+    let mut objects: Vec<Box<Hitable<'a> + Sync>> = Vec::with_capacity(N);
 
     let big_sphere = Sphere::new(Vec3::new(0., -1000., -0.), 1000., Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
     objects.push(Box::new(big_sphere));
@@ -83,9 +84,9 @@ fn random_scene<'a>() -> impl Hitable<'a> {
 }
 
 fn main() {
-    const NX: u32 = 1600;
-    const NY: u32 = 800;
-    const NS: u32 = 200;
+    const NX: u32 = 800;
+    const NY: u32 = 400;
+    const NS: u32 = 100;
 
     let R: f64 = (PI / 4.).cos();
 
@@ -108,9 +109,12 @@ fn main() {
     file.write_fmt(format_args!("P3\n{} {}\n255\n", NX, NY)).unwrap();
     for j in (0..NY).rev() {
         println!("{}", j);
-        for i in 0..NX {
+        let mut v = Vec::with_capacity(NX as usize);
+        v.resize(NX as usize, (Vec3::new(0., 0., 0.), 0, 0, 0));
+        let v: Vec<(Vec3, u8, u8, u8)> = v.into_par_iter().enumerate().map(|(i, _)| {
             let mut col = Vec3::new(0., 0., 0.);
             for _ in 0..NS {
+                let mut gen = OsRng::new().unwrap();
                 let rand_u: f64 = gen.gen();
                 let rand_v: f64 = gen.gen();
                 let u = ((i as f64) + rand_u) / (NX as f64);
@@ -127,7 +131,10 @@ fn main() {
             let ir = (255.99*col.e[0]) as u8;
             let ig = (255.99*col.e[1]) as u8;
             let ib = (255.99*col.e[2]) as u8;
+            (col, ir, ig, ib)
 
+        }).collect();
+        for (col, ir, ig, ib) in v {
             file.write_fmt(format_args!("{} {} {}\n", ir, ig, ib)).unwrap();
         }
     }
